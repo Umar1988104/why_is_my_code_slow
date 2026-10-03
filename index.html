@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Is My Code Slow?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#analyzer" data-view="analyzer">BIG O</a>
+    <nav class="nav-links">
+      <a href="#analyzer" data-view="analyzer" class="active">Analyzer</a>
+      <a href="#patterns" data-view="patterns">Patterns</a>
+      <a href="#learn" data-view="learn">Learn</a>
+      <a href="#history" data-view="history">History</a>
+    </nav>
+    <div class="nav-actions">
+      <button id="themeToggle" class="icon-btn" title="Switch theme" aria-label="Switch theme">☾</button>
+      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
+    </div>
+  </div>
+  <div id="settingsPanel" class="settings hidden">
+    <label><input type="checkbox" id="setAnim" checked> Animate counters and graph</label>
+    <label><input type="checkbox" id="setAutoSave" checked> Save analyses to history</label>
+  </div>
+</header>
+
+<!-- ============ ANALYZER ============ -->
+<main id="view-analyzer" class="view">
+  <section class="hero">
+    <h1>Why is my code<br>so slow?</h1>
+    <p class="sub">Paste your code. See what it actually costs.</p>
+  </section>
+
+  <section class="grid">
+    <!-- EDITOR -->
+    <div class="panel editor-panel">
+      <div class="panel-bar">
+        <select id="language" class="select" aria-label="Language">
+          <option>Java</option>
+          <option>Python</option>
+          <option>JavaScript</option>
+        </select>
+        <div class="bar-right">
+          <button id="copyBtn" class="ghost-btn">Copy</button>
+        </div>
+      </div>
+
+      <div class="editor" id="editor">
+        <div class="gutter" id="gutter">1</div>
+        <div class="code-area">
+          <pre class="highlight" id="highlight" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false" autocomplete="off" aria-label="Code editor"></textarea>
+        </div>
+      </div>
+
+      <div class="panel-foot">
+        <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>Enter</kbd> Analyze</span>
+        <button id="analyzeBtn" class="primary-btn">Analyze</button>
+      </div>
+
+      <div class="samples">
+        <span>Try:</span>
+        <button class="link-btn" data-sample="nested">nested loops</button>
+        <button class="link-btn" data-sample="binary">binary search</button>
+        <button class="link-btn" data-sample="recursion">recursion</button>
+        <button class="link-btn" data-sample="sorting">sorting</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="panel result-panel">
+      <div id="emptyState" class="empty">
+        <p class="empty-title">Paste something you're working on.</p>
+        <p class="empty-sub">The analyzer reads loop nesting, recursion, sorting calls and search patterns, then shows you how that work grows.</p>
+      </div>
+
+      <div id="result" class="result hidden">
+        <div class="result-head">
+          <span class="label">Detected complexity</span>
+          <span class="analysis-id" id="analysisId">#0001</span>
+        </div>
+        <div class="big-o" id="bigO">O(n³)</div>
+        <p class="result-note" id="resultNote"></p>
+
+        <div class="stat-row">
+          <div class="stat"><span class="label">Time</span><b id="timeC">—</b></div>
+          <div class="stat"><span class="label">Space</span><b id="spaceC">—</b></div>
+          <div class="stat"><span class="label">Pattern</span><b id="patternName">—</b></div>
+          <div class="stat"><span class="label">Confidence</span><b id="confidence">—</b></div>
+        </div>
+
+        <div class="why">
+          <span class="label">Why</span>
+          <p id="whyText"></p>
+        </div>
+
+        <div class="tags" id="tags"></div>
+        <div class="tag-explain hidden" id="tagExplain"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPERATIONS -->
+  <section class="panel section hidden" id="opsSection">
+    <h2>How much work is that, really?</h2>
+    <div class="ops-controls">
+      <label for="nSlider">Input size <b id="nValue" class="mono">10</b></label>
+      <input type="range" id="nSlider" min="1" max="1000" value="10">
+    </div>
+    <div class="ops-readout">
+      <div><span class="label">Input size</span><b class="mono" id="opsN">10</b></div>
+      <div><span class="label">Estimated operations</span><b class="mono big-num" id="opsCount">1,000</b></div>
+    </div>
+    <table class="ops-table">
+      <thead><tr><th>Input size</th><th>Operations</th></tr></thead>
+      <tbody id="opsTable"></tbody>
+    </table>
+    <p class="hint" id="opsHint">Every extra level of nesting multiplies the work by n.</p>
+  </section>
+
+  <!-- LOOP VISUALIZER -->
+  <section class="panel section hidden" id="loopSection">
+    <h2>Loop visualizer</h2>
+    <div class="loop-wrap" id="loopWrap"></div>
+    <div class="loop-bar">
+      <div class="counter mono" id="loopCounter">000</div>
+      <div class="loop-btns">
+        <button class="ghost-btn" id="loopPlay">▶ Play</button>
+        <button class="ghost-btn" id="loopPause">⏸ Pause</button>
+        <button class="ghost-btn" id="loopReset">↻ Reset</button>
+      </div>
+    </div>
+    <p class="hint" id="loopHint"></p>
+  </section>
+
+  <!-- GRAPH -->
+  <section class="panel section hidden" id="graphSection">
+    <h2>How it scales</h2>
+    <div class="curve-toggles" id="curveToggles"></div>
+    <canvas id="graph" width="900" height="420"></canvas>
+    <p class="hint">Operations are drawn on a logarithmic vertical axis so every curve stays readable.</p>
+  </section>
+
+  <!-- OPTIMIZATION -->
+  <section class="panel section hidden" id="optSection">
+    <h2>Can you make it faster?</h2>
+    <div class="before-line">Current: <b class="mono accent" id="optCurrent">O(n³)</b></div>
+    <button class="primary-btn" id="optStart">Explore optimization</button>
+
+    <div class="coach hidden" id="coach">
+      <p class="coach-q" id="coachQ"></p>
+      <div class="coach-btns">
+        <button class="ghost-btn" data-ans="yes">Yes</button>
+        <button class="ghost-btn" data-ans="no">No</button>
+        <button class="ghost-btn" id="hintBtn">Give me a hint</button>
+      </div>
+      <div class="coach-feed" id="coachFeed"></div>
+      <button class="link-btn hidden" id="showApproach">Show the approach</button>
+    </div>
+
+    <div class="compare hidden" id="compare">
+      <div class="compare-card">
+        <span class="label">Before</span>
+        <b class="mono" id="beforeO"></b>
+        <span class="mono muted" id="beforeOps"></span>
+      </div>
+      <div class="compare-arrow">→</div>
+      <div class="compare-card good">
+        <span class="label">After</span>
+        <b class="mono" id="afterO"></b>
+        <span class="mono muted" id="afterOps"></span>
+      </div>
+      <p class="payoff" id="payoff"></p>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="panel section" id="progressSection">
+    <h2>Complexities you've seen</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-count mono" id="progressCount">0 / 8</div>
+    <ul class="progress-list" id="progressList"></ul>
+  </section>
+</main>
+
+<!-- ============ PATTERNS ============ -->
+<main id="view-patterns" class="view hidden">
+  <section class="hero small">
+    <h1>Learn to see complexity.</h1>
+    <p class="sub">Seven shapes cover almost everything you'll meet in interviews.</p>
+  </section>
+  <section class="cards" id="patternCards"></section>
+</main>
+
+<!-- ============ LEARN ============ -->
+<main id="view-learn" class="view hidden">
+  <section class="hero small">
+    <h1>Test yourself.</h1>
+    <p class="sub">Read the code, commit to an answer, then find out why.</p>
+  </section>
+  <section class="panel section quiz">
+    <div class="quiz-head">
+      <span class="label">Question <span id="quizIndex">1</span> of <span id="quizTotal">6</span></span>
+      <span class="mono muted" id="quizScore">0 correct</span>
+    </div>
+    <pre class="quiz-code mono" id="quizCode"></pre>
+    <p class="quiz-q">What is the time complexity?</p>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-feedback hidden" id="quizFeedback"></div>
+    <button class="primary-btn hidden" id="quizNext">Next question</button>
+  </section>
+</main>
+
+<!-- ============ HISTORY ============ -->
+<main id="view-history" class="view hidden">
+  <section class="hero small">
+    <h1>History</h1>
+    <p class="sub">Every analysis is stored in this browser only.</p>
+  </section>
+  <section class="panel section">
+    <div class="history-head">
+      <span class="label" id="historyCount"></span>
+      <button class="ghost-btn" id="clearHistory">Clear history</button>
+    </div>
+    <ul class="history-list" id="historyList"></ul>
+  </section>
+</main>
+
+<footer class="foot">Pattern-based estimates, not a proof. Read the reasoning, not just the letter.</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
